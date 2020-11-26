@@ -32,8 +32,6 @@ while(not os.path.exists(folder_location)):
     debug_print(folder_location)
     folder_location =  raw_input("Bruh give me an actual path: ")
 
-
-
 # =====================================Parking Lots ===============================#
 # ==========Special Case since theres a lot of data at once ================# 
 #https://www150.statcan.gc.ca/n1/pub/92-500-g/92-500-g2020001-eng.htm --> recommend Rank  or class type to get major/highway# 
@@ -121,6 +119,10 @@ def do_intersect(features_lst, output_name):
 def create_folder(name):
     try:
         new_dir = folder_location + '/' + name
+        # 0 clue if this works be CAREFUL
+        # if (os.path.exists(new_dir)):
+        #    arcpy.Delete_management(new_dir)
+        # else:
         os.mkdir(new_dir)
         return new_dir
     except Exception as e:
@@ -130,7 +132,7 @@ def do_buffer(points_file, dist_to_buf):
     debug_print("Buffering point file" + points_file)
     split_name = points_file.split('.')
     out_name = split_name[0] + '_buffered.' + split_name[1]
-    output_file = create_folder(out_name)
+    output_file = str(create_folder(out_name)) + out_name
 
     try:
         arcpy.Buffer_analysis(points_file, output_file, dist_to_buf)
