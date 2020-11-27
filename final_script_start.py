@@ -16,7 +16,7 @@ def error_print(string):
 
 
 #Global Variables to hold file paths for sanity reasons they're here for now
-aiports_FP = ""
+airports_FP = ""
 existing_charging_FP = ""
 cinemas_FP = ""
 facilities_FP = ""
@@ -177,7 +177,7 @@ def get_FP (dirs_in_folder, folder_name):
 #maybe then we can sub out the hardcoded strings 
 #======================================Airports=============================================# 
 airport_lst_src = check_exists("airports")
-aiports_FP = get_FP(airport_lst_src, "airports")
+airports_FP = get_FP(airport_lst_src, "airports")
 if (airports_FP is None):
     info_print("airports_FP did not find a shape file for usage")
 
