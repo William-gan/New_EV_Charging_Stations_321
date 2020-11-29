@@ -144,14 +144,16 @@ for polygon in polygon_files:
     debug_print("Working on file: " + polygon)
     field_list = arcpy.ListFields(polygon)
     to_delete = []
-    # disable cause there's an issue
-    # for field in field_list:
-    #     if(not re.match("(.*)shape(.*)", field.name, flags=re.IGNORECASE)):
-    #         if(field.name not in ["FID", "OID", "AREA"]):
-    #             to_delete.append(field.name)
-    debug_print("Currently deleting attributes on file: " + polygon)
     arcpy.AddGeometryAttributes_management(polygon, "AREA")
-    arcpy.DeleteField_management(polygon, "ADDRESS")
+    # disable cause there's an issue
+    for field in field_list:
+        if(not re.match("(.*)shape(.*)", field.name, flags=re.IGNORECASE)):
+            if(field.name.upper() not in ["FID", "OID", "AREA", "POLY_AREA"]):
+                debug_print("Deleteing attribute {} on polygon {}".format(field.name, polygon))
+                to_delete.append(field.name)
+    for delete in to_delete:
+        debug_print("Currently deleting attributes on file: " + polygon)
+        arcpy.DeleteField_management(polygon, delete)
 try:
     info_print("Now attempting to merge all polygons together, wish me luck!")
     arcpy.Merge_management(polygon_files, "merged_polygons.shp")
@@ -168,9 +170,25 @@ for points in point_files:
     output_locations.append(folder_location + '\\' + out_name)
     try:
         # 338.084881 is from arcmap I'm not doing the statistics thing on this thanks
-        arcpy.Buffer_analysis(file_path + '/ParkingLot_Data/' + shp, out_name, 338.084881)
+        arcpy.Buffer_analysis(file_path + '/ParkingLot_Data/' + points, out_name, "50 Feet")
     except Exception as e:
         error_print("Hit error while trying to buffer point {}, produced error".format(points) + str(e))
+
+    arcpy.AddGeometryAttributes_management(out_name, "AREA_GEODESIC")
+    field_list = arcpy.ListFields(out_name)
+    to_delete = []
+    for field in field_list:
+        debug_print("Point {} has fields {}".format(points, field.name))
+        if(not re.match("(.*)shape(.*)", field.name, flags=re.IGNORECASE)):
+            if(field.name.upper() not in ["FID", "OID", "AREA", "POLY_AREA", "AREA_GEO", "BUFF_DIST", "Shape"]):
+                debug_print("Deleteing attribute {} on point {}".format(field.name, out_name))
+                to_delete.append(field.name)
+    for delete in to_delete:
+        debug_print("Currently deleting attributes on file: " + out_name)
+        arcpy.DeleteField_management(out_name, delete)
+
+
+debug_print(output_locations)
 
 try:
     info_print("Now attempting to merge all shapes together, wish me luck!")
