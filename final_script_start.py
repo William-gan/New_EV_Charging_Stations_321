@@ -69,7 +69,7 @@ def check_exists (dict_name):
             info_print("Using: {}".format(items))
             check_src.append(items)
         else:
-            debug_print("Ignoring file: {}".format(f))
+            debug_print("Ignoring file: {}".format(items))
     
     if (not len(check_src)):
         error_print("No files found inside of" + folder_name)
