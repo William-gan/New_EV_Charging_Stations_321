@@ -66,7 +66,7 @@ def check_exists (dict_name):
 
     for items in os.listdir(folder_location + '/' + folder_name + '/'):
         if items.endswith('.shp'):
-            info_print("Using: {}".format(f))
+            info_print("Using: {}".format(items))
             check_src.append(items)
         else:
             debug_print("Ignoring file: {}".format(f))
