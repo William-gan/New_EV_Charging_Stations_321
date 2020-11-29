@@ -27,10 +27,21 @@ malls_FP = ""
 picnic_FP = ""
 province_FP = "'"
 
-#======================================HELPERS=============================================# 
+# =====================================HELPERS=================================#
+
+
 def do_intersect(features_lst, output_name):
-    #https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
-    return None 
+    # https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
+    if features_lst.length() < 1 :
+        info_print("Did not provide enough features for intersect",)
+
+    try:
+        arcpy.Intersect(features_lst, output_name)
+        return output_name
+    except Exception as e:
+        error_print("Intersect failed on outputing for " + output_name)
+    return None
+
 
 def create_folder(name):
     try:
@@ -44,6 +55,7 @@ def create_folder(name):
     except Exception as e:
         error_print("Hit error while creating new output dir for " + name + " use")
 
+
 def do_buffer(points_file, dist_to_buf):
     debug_print("Buffering point file" + points_file)
     split_name = points_file.split('.')
@@ -56,12 +68,13 @@ def do_buffer(points_file, dist_to_buf):
     except Exception as e:
         error_print("Hit error while trying to buffer point {}, produced error".format(points) + str(e))
 
+
 def check_exists (dict_name):
     folder_name = str(dict_name)
-    if(folder_name not in directories):
+    if folder_name not in directories:
         info_print(folder_name + " not present in root dir")
         exit(1)
-    
+
     check_src = []
 
     for items in os.listdir(folder_location + '/' + folder_name + '/'):
@@ -70,11 +83,11 @@ def check_exists (dict_name):
             check_src.append(items)
         else:
             debug_print("Ignoring file: {}".format(items))
-    
-    if (not len(check_src)):
+
+    if not len(check_src):
         error_print("No files found inside of" + folder_name)
         exit(1)
-    
+
     return check_src
 
 
@@ -91,19 +104,20 @@ def get_FP (dirs_in_folder, folder_name):
 def get_roads(road_shapefile):
     pass
 
-#======================================END OF HELPERS=============================================# 
+# =====================================END OF HELPERS==========================#
 
+# Issues:
+# Unsure how we want to handle the folder names since its kind of specific naming
+# we used so unless user provides? maybe then we can sub out the hardcoded strings
 
-#Global Function variable here used by everyone
 
 folder_location = raw_input("Please input where the files are located (root folder of project): ")
 while(not os.path.exists(folder_location)):
     debug_print(folder_location)
     folder_location =  raw_input("Bruh give me an actual path: ")
 
-# =====================================Parking Lots ===============================#
-# ==========Special Case since theres a lot of data at once ================# 
-#https://www150.statcan.gc.ca/n1/pub/92-500-g/92-500-g2020001-eng.htm --> recommend Rank  or class type to get major/highway# 
+# ====================================Parking Lots ============================#
+# ==========Special Case since theres a lot of data at once ================#
 directories = os.listdir(folder_location)
 if("ParkingLot_Data" not in directories):
     info_print("Bro you need to give me ParkingLot_Data as a directory kinda cringe")
@@ -195,16 +209,17 @@ try:
     arcpy.Merge_management(output_locations, "final_merged.shp")
 except Exception as e:
     error_print("Hit error while merging all shapes together, error produced is: " + str(e))
-    
+
 
 # Get roads file and pull major roads and highways from it
+# ===================================Buffered Roads============================#
 info_print("Pulling all major roads from roads shp file")
 roads = folder_location + '/ParkingLot_Data/Ontario_Roads.shp'
 
 try:
     arcpy.MakeFeatureLayer_management(roads,'major_roads')
     arcpy.SelectLayerByAttribute_management('major_roads', 'NEW_SELECTION', 'RANK < \'4\'')
-    # Write the selected features to a new featureclass
+    # Write the selected features to a new feature class
     arcpy.CopyFeatures_management('major_roads', 'major_roads.shp')
 except Exception as e:
     error_print("Hit error when extracting roads from Ontario_Roads, error is:" + str(e))
@@ -212,55 +227,54 @@ except Exception as e:
 info_print("buffered_roads")
 buffered_roads = do_buffer(folder_location +"/major_roads.shp",'500 Meters')
 
-
-#Unsure how we want to handle the folder names since its kind of specific naming we used so unless user provides? 
-#maybe then we can sub out the hardcoded strings 
-#======================================Airports=============================================# 
+# ======================================Airports===============================#
 airport_lst_src = check_exists("airports")
 airports_FP = get_FP(airport_lst_src, "airports")
 if (airports_FP is None):
     info_print("airports_FP did not find a shape file for usage")
 
 
-#======================================Current Charging Stations ===========================#
+# =====================================Current Charging Stations ==============#
 charging_lst_src = check_exists("charging_station")
 existing_charging_FP = get_FP(charging_lst_src, "charging_station")
 if (existing_charging_FP is None):
     info_print("existing_charging_FP did not find a shape file for usage")
 
-#======================================Cinemas==============================================#
+# =====================================Cinemas=================================#
 cinemas_lst_src = check_exists("cinemas")
 cinemas_FP = get_FP(cinemas_lst_src, "cinemas")
 if (cinemas_FP is None):
     info_print("cinemas_FP did not find a shape file for usage")
 
-#======================================Specific Local Parks=================================#
+# =====================================Specific Local Parks====================#
 facilities_lst_src = check_exists("facilities")
 facilities_FP = get_FP(facilities_lst_src, "facilities")
 if (facilities_FP is None):
     info_print("facilities_FP did not find a shape file for usage")
 
-#======================================Gas Stations=========================================#
+# =====================================Gas Stations============================#
 gas_station_lst_src = check_exists("Gas_Stations_Points_Ontario")
 gas_FP = get_FP(gas_station_lst_src, "Gas_Stations_Points_Ontario")
 if (gas_FP is None):
     info_print("gas_FP did not find a shape file for usage")
 
-#======================================Malls================================================#
+# =====================================Malls===================================#
 mall_lst_src = check_exists("Malls_Shopping_Hubs")
 malls_FP = get_FP(mall_lst_src, "Malls_shopping_Hubs")
 if (malls_FP is None):
     info_print("malls_FP did not find a shape file for usage")
 
-#======================================Picnic Parks=========================================#
+# =====================================Picnic Parks============================#
 picnic_lst_src = check_exists("picnic_parks_projections")
 picnic_FP = get_FP(picnic_lst_src, "picnic_parks_projections")
 if (picnic_FP is None):
     info_print("picnic_FP did not find a shape file for usage")
 
-#======================================Provincal Parks======================================#
+# =====================================Provincal Parks=========================#
 province_lst_src = check_exists("provincial_parks_projected")
 province_FP = get_FP(province_lst_src, "provincial_parks_projected")
 if (province_FP is None):
     info_print("province_FP did not find a shape file for usage")
+
+
 
