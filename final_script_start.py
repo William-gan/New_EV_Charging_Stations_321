@@ -28,15 +28,27 @@ picnic_FP = ""
 province_FP = "'"
 
 # =====================================HELPERS=================================#
+def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
+    #https://pro.arcgis.com/en/pro-app/tool-reference/data-management/feature-to-point.htm
+    if features_lst.length() < 1 :
+        info_print("Did not provide enough features for feature to point",)
+
+    try:
+        arcpy.FeatureToPoint(features_lst, output_name, point_loc)
+        return output_name
+    except Exception as e:
+        error_print("Intersect failed on outputing for " + output_name)
+    return None
 
 
-def do_intersect(features_lst, output_name):
+def do_intersect(features_lst, output_name, join="ALL"):
     # https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
+
     if features_lst.length() < 1 :
         info_print("Did not provide enough features for intersect",)
 
     try:
-        arcpy.Intersect(features_lst, output_name)
+        arcpy.Intersect_analysis(features_lst, output_name, join)
         return output_name
     except Exception as e:
         error_print("Intersect failed on outputing for " + output_name)
@@ -239,6 +251,7 @@ charging_lst_src = check_exists("charging_station")
 existing_charging_FP = get_FP(charging_lst_src, "charging_station")
 if (existing_charging_FP is None):
     info_print("existing_charging_FP did not find a shape file for usage")
+charging_station_buffer = do_buffer(existing_charging_FP, '50 Feet')
 
 # =====================================Cinemas=================================#
 cinemas_lst_src = check_exists("cinemas")
