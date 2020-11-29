@@ -17,7 +17,7 @@ def error_print(string):
     print("[ERROR]: {}".format(string))
 
 
-#Global Variables to hold file paths for sanity reasons they're here for now
+# Global Variables to hold file paths for sanity reasons they're here for now
 airports_FP = ""
 existing_charging_FP = ""
 cinemas_FP = ""
@@ -25,11 +25,15 @@ facilities_FP = ""
 gas_FP = ""
 malls_FP = ""
 picnic_FP = ""
-province_FP = "'"
-
+province_FP = ""
+final_out_FP = "Possible_EV_Stations.shp"
 # =====================================HELPERS=================================#
+
+
 def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
     #https://pro.arcgis.com/en/pro-app/tool-reference/data-management/feature-to-point.htm
+
+    # IDK if we'll end up using this, since its unreliable
     if features_lst.length() < 1 :
         info_print("Did not provide enough features for feature to point",)
 
@@ -37,13 +41,23 @@ def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
         arcpy.FeatureToPoint(features_lst, output_name, point_loc)
         return output_name
     except Exception as e:
-        error_print("Intersect failed on outputing for " + output_name)
+        error_print("FTP failed on outputing for " + output_name)
     return None
+
+def erase_points(points_file, boundaries):
+    # https://desktop.arcgis.com/en/arcmap/10.3/tools/editing-toolbox/erase-point.htm
+
+    try:
+        arcpy.ErasePoint_edit(point_files, boundaries, "INSIDE")
+    except Exception as e:
+        error_print("Hit error while trying to Erase points , produced error" + str(e))
+
 
 
 def do_intersect(features_lst, output_name, join="ALL"):
     # https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
 
+    info_print("Doing Intersect for " + output_name)
     if features_lst.length() < 1 :
         info_print("Did not provide enough features for intersect",)
 
@@ -51,11 +65,12 @@ def do_intersect(features_lst, output_name, join="ALL"):
         arcpy.Intersect_analysis(features_lst, output_name, join)
         return output_name
     except Exception as e:
-        error_print("Intersect failed on outputing for " + output_name)
+        error_print("Hit error while trying to intersect files, produced error" + str(e))
     return None
 
 
 def create_folder(name):
+    info_print("Making a new folder with the name " + name)
     try:
         new_dir = folder_location + '/' + name
         # 0 clue if this works be CAREFUL
@@ -65,23 +80,26 @@ def create_folder(name):
         os.mkdir(new_dir)
         return new_dir
     except Exception as e:
-        error_print("Hit error while creating new output dir for " + name + " use")
+        error_print(
+            "Hit error while trying to create a new folder produced error" + str(e))
 
 
 def do_buffer(points_file, dist_to_buf):
-    debug_print("Buffering point file" + points_file)
-    split_name = points_file.split('.')
-    out_name = split_name[0] + '_buffered.' + split_name[1]
+    debug_print("do_buffer is Buffering point file " + points_file)
+    new_split_name = points_file.split('.')
+    new_out_name = new_split_name[0] + '_buffered.' + new_split_name[1]
     # output_file = str(create_folder(out_name)) + out_name
 
     try:
-        arcpy.Buffer_analysis(points_file, out_name, dist_to_buf)
-        return out_name
+        arcpy.Buffer_analysis(points_file, new_out_name, dist_to_buf)
+        return new_out_name
     except Exception as e:
-        error_print("Hit error while trying to buffer point {}, produced error".format(points) + str(e))
+        error_print("Hit error while trying to buffer point {}, produced error".format(points_file) + str(e))
 
 
 def check_exists (dict_name):
+
+    info_print("Checking inside of " + dict_name + " for a shape file")
     folder_name = str(dict_name)
     if folder_name not in directories:
         info_print(folder_name + " not present in root dir")
@@ -104,6 +122,7 @@ def check_exists (dict_name):
 
 
 def get_FP (dirs_in_folder, folder_name):
+    info_print("Looking for file path to " + folder_name)
     for item in dirs_in_folder:
         temp_path = folder_location + '/' + folder_name + '/' + item
         temp_type = arcpy.Describe(temp_path).shapeType
@@ -112,6 +131,7 @@ def get_FP (dirs_in_folder, folder_name):
         else:
             debug_print("Unaccounted for file type: {} in file {}".format(temp_type, item))
         return None
+
 
 def get_roads(road_shapefile):
     pass
@@ -129,7 +149,6 @@ while(not os.path.exists(folder_location)):
     folder_location =  raw_input("Bruh give me an actual path: ")
 
 # ====================================Parking Lots ============================#
-# ==========Special Case since theres a lot of data at once ================#
 directories = os.listdir(folder_location)
 if("ParkingLot_Data" not in directories):
     info_print("Bro you need to give me ParkingLot_Data as a directory kinda cringe")
@@ -216,9 +235,10 @@ for points in point_files:
 
 debug_print(output_locations)
 
+parking_lot_buffered = "final_merged.shp"
 try:
     info_print("Now attempting to merge all shapes together, wish me luck!")
-    arcpy.Merge_management(output_locations, "final_merged.shp")
+    arcpy.Merge_management(output_locations, parking_lot_buffered)
 except Exception as e:
     error_print("Hit error while merging all shapes together, error produced is: " + str(e))
 
@@ -247,10 +267,12 @@ if (airports_FP is None):
 
 
 # =====================================Current Charging Stations ==============#
-charging_lst_src = check_exists("charging_station")
+charging_lst_src = check_exists("charging_stations")
 existing_charging_FP = get_FP(charging_lst_src, "charging_station")
 if (existing_charging_FP is None):
     info_print("existing_charging_FP did not find a shape file for usage")
+
+
 charging_station_buffer = do_buffer(existing_charging_FP, '50 Feet')
 
 # =====================================Cinemas=================================#
@@ -258,6 +280,8 @@ cinemas_lst_src = check_exists("cinemas")
 cinemas_FP = get_FP(cinemas_lst_src, "cinemas")
 if (cinemas_FP is None):
     info_print("cinemas_FP did not find a shape file for usage")
+
+cinemas_buffer = do_buffer(cinemas_FP, '50 Feet')
 
 # =====================================Specific Local Parks====================#
 facilities_lst_src = check_exists("facilities")
@@ -271,17 +295,25 @@ gas_FP = get_FP(gas_station_lst_src, "Gas_Stations_Points_Ontario")
 if (gas_FP is None):
     info_print("gas_FP did not find a shape file for usage")
 
+gas_buffer = do_buffer(gas_FP, '50 Feet')
+
+
 # =====================================Malls===================================#
 mall_lst_src = check_exists("Malls_Shopping_Hubs")
-malls_FP = get_FP(mall_lst_src, "Malls_shopping_Hubs")
+malls_FP = get_FP(mall_lst_src, "Malls_Shopping_Hubs")
 if (malls_FP is None):
     info_print("malls_FP did not find a shape file for usage")
+
+malls_buffer = do_buffer(malls_FP, '50 Feet')
 
 # =====================================Picnic Parks============================#
 picnic_lst_src = check_exists("picnic_parks_projections")
 picnic_FP = get_FP(picnic_lst_src, "picnic_parks_projections")
 if (picnic_FP is None):
     info_print("picnic_FP did not find a shape file for usage")
+
+picnic_buffer = do_buffer(picnic_FP, '50 Feet')
+
 
 # =====================================Provincal Parks=========================#
 province_lst_src = check_exists("provincial_parks_projected")
@@ -290,4 +322,22 @@ if (province_FP is None):
     info_print("province_FP did not find a shape file for usage")
 
 
+# ====== Do intersection and pray =====#
+lst_intersect = [
+                cinemas_buffer, picnic_buffer, malls_buffer, gas_buffer,
+                facilities_FP, province_FP, airports_FP,
+                buffered_roads, parking_lot_buffered
+                 ]
+
+
+out_intersect = "intersect_result.shp"
+do_intersect(lst_intersect, out_intersect)
+
+# ===== Figure out XY here ======#
+
+# use final_out_FP variable for the final points file we're making.
+
+# ====== Subtract from existing charging here ======#
+
+# do_erase(final_points , charging_station_buffer)
 
