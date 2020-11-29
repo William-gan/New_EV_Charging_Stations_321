@@ -26,9 +26,12 @@ gas_FP = ""
 malls_FP = ""
 picnic_FP = ""
 province_FP = ""
-final_out_FP = "Possible_EV_Stations.shp"
-# =====================================HELPERS=================================#
 
+folder_location = ""
+final_out_FP = "Possible_EV_Stations.shp"
+output_folder = "temp_out"
+
+# =====================================HELPERS=================================#
 
 def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
     #https://pro.arcgis.com/en/pro-app/tool-reference/data-management/feature-to-point.htm
@@ -44,6 +47,7 @@ def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
         error_print("FTP failed on outputing for " + output_name)
     return None
 
+
 def erase_points(points_file, boundaries):
     # https://desktop.arcgis.com/en/arcmap/10.3/tools/editing-toolbox/erase-point.htm
 
@@ -53,35 +57,17 @@ def erase_points(points_file, boundaries):
         error_print("Hit error while trying to Erase points , produced error" + str(e))
 
 
-
 def do_intersect(features_lst, output_name, join="ALL"):
     # https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
 
     info_print("Doing Intersect for " + output_name)
-    if features_lst.length() < 1 :
-        info_print("Did not provide enough features for intersect",)
+    if features_lst.length() < 1:
+        info_print("Did not provide enough features for intersect")
 
     try:
         arcpy.Intersect_analysis(features_lst, output_name, join)
-        return output_name
     except Exception as e:
         error_print("Hit error while trying to intersect files, produced error" + str(e))
-    return None
-
-
-def create_folder(name):
-    info_print("Making a new folder with the name " + name)
-    try:
-        new_dir = folder_location + '/' + name
-        # 0 clue if this works be CAREFUL
-        # if (os.path.exists(new_dir)):
-        #    arcpy.Delete_management(new_dir)
-        # else:
-        os.mkdir(new_dir)
-        return new_dir
-    except Exception as e:
-        error_print(
-            "Hit error while trying to create a new folder produced error" + str(e))
 
 
 def do_buffer(points_file, dist_to_buf):
@@ -97,7 +83,7 @@ def do_buffer(points_file, dist_to_buf):
         error_print("Hit error while trying to buffer point {}, produced error".format(points_file) + str(e))
 
 
-def check_exists (dict_name):
+def check_exists(dict_name):
 
     info_print("Checking inside of " + dict_name + " for a shape file")
     folder_name = str(dict_name)
@@ -121,7 +107,7 @@ def check_exists (dict_name):
     return check_src
 
 
-def get_FP (dirs_in_folder, folder_name):
+def get_FP(dirs_in_folder, folder_name):
     info_print("Looking for file path to " + folder_name)
     for item in dirs_in_folder:
         temp_path = folder_location + '/' + folder_name + '/' + item
@@ -136,12 +122,21 @@ def get_FP (dirs_in_folder, folder_name):
 def get_roads(road_shapefile):
     pass
 
+
+def create_folder():
+    try:
+        os.mkdir(folder_location + '/' + output_folder)
+    except Exception as e:
+        error_print("Hit error while trying to create a new folder produced error" + str(e))
+
+
+def get_params_and_init_folders():
+    folder_location = arcpy.GetParameterAsText(0)
+    final_out_FP = arcpy.GetParameterAsText(1)
+    output_folder = arcpy.GetParameterAsText(2)
+    create_folder()
+
 # =====================================END OF HELPERS==========================#
-
-# Issues:
-# Unsure how we want to handle the folder names since its kind of specific naming
-# we used so unless user provides? maybe then we can sub out the hardcoded strings
-
 
 folder_location = raw_input("Please input where the files are located (root folder of project): ")
 while(not os.path.exists(folder_location)):
@@ -327,7 +322,7 @@ lst_intersect = [
                 cinemas_buffer, picnic_buffer, malls_buffer, gas_buffer,
                 facilities_FP, province_FP, airports_FP,
                 buffered_roads, parking_lot_buffered
-                 ]
+                ]
 
 
 out_intersect = "intersect_result.shp"
