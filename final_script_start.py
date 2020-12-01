@@ -257,8 +257,8 @@ except Exception as e:
 
 info_print("buffered_roads")
 
-# buffered_roads = do_buffer(folder_location +"/major_roads.shp",'500 Meters')
-arcpy.Buffer_analysis(folder_location +"/major_roads.shp",folder_location+'/major_roads_buffered.shp','500 Meters', "", "ROUND", "ALL", "")
+buffered_roads = folder_location +'/major_roads_buffered.shp'
+arcpy.Buffer_analysis(folder_location +"/major_roads.shp",buffered_roads,'500 Meters', "", "ROUND", "ALL", "")
 
 
 # ======================================Airports===============================#
@@ -330,12 +330,16 @@ lst_intersect = [
                 facilities_FP, province_FP, airports_FP,
                 parking_lot_buffered
                 ]
-print(lst_intersect)
-
+lst_for_merging = []
 for i in range(len(lst_intersect)):
     split = lst_intersect[i].split('.')
     new_name = split[0] + '_inter.shp'
-    do_intersect([lst_intersect[i], folder_location+'/major_roads_buffered.shp'], new_name)
+    do_intersect([lst_intersect[i], buffered_roads], new_name)
+    new_aggregate = split[0] + '_agg.shp'
+    arcpy.AggregatePolygons_cartography(new_name, new_aggregate, '20 Meters', "", "" , True , "", "")
+    lst_for_merging[i] = split[0] + '_FTP.shp'
+    do_feature_to_point(new_aggregate, lst_for_merging[i], "INSIDE")
+
 
 
 # ===== Figure out XY here ======#
