@@ -37,7 +37,7 @@ def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
     #https://pro.arcgis.com/en/pro-app/tool-reference/data-management/feature-to-point.htm
 
     # IDK if we'll end up using this, since its unreliable
-    if features_lst.length() < 1 :
+    if len(features_lst) < 1 :
         info_print("Did not provide enough features for feature to point",)
 
     try:
@@ -58,11 +58,14 @@ def erase_points(points_file, boundaries):
 
 
 def do_intersect(features_lst, output_name, join="ALL"):
-    # https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm
+    # https://pro.arcgiscmd.com/en/pro-app/tool-reference/analysis/intersect.htm
 
     info_print("Doing Intersect for " + output_name)
-    if features_lst.length() < 1:
+    if len(features_lst) < 1:
         info_print("Did not provide enough features for intersect")
+
+    for i in features_lst:
+        debug_print("item " + i)
 
     try:
         arcpy.Intersect_analysis(features_lst, output_name, join)
@@ -112,7 +115,7 @@ def get_FP(dirs_in_folder, folder_name):
     for item in dirs_in_folder:
         temp_path = folder_location + '/' + folder_name + '/' + item
         temp_type = arcpy.Describe(temp_path).shapeType
-        if(file_type == "Point") or (file_type == "Polygon"):
+        if(temp_type == "Point") or (temp_type == "Polygon"):
             return temp_path
         else:
             debug_print("Unaccounted for file type: {} in file {}".format(temp_type, item))
@@ -143,11 +146,12 @@ while(not os.path.exists(folder_location)):
     debug_print(folder_location)
     folder_location =  raw_input("Bruh give me an actual path: ")
 
-# ====================================Parking Lots ============================#
 directories = os.listdir(folder_location)
+# ====================================Parking Lots ============================#
+
 if("ParkingLot_Data" not in directories):
-    info_print("Bro you need to give me ParkingLot_Data as a directory kinda cringe")
-    exit(1)
+ info_print("Bro you need to give me ParkingLot_Data as a directory kinda cringe")
+ exit(1)
 
 parking_lot_source = []
 
@@ -252,6 +256,7 @@ except Exception as e:
     error_print("Hit error when extracting roads from Ontario_Roads, error is:" + str(e))
 
 info_print("buffered_roads")
+
 buffered_roads = do_buffer(folder_location +"/major_roads.shp",'500 Meters')
 
 # ======================================Airports===============================#
@@ -263,7 +268,7 @@ if (airports_FP is None):
 
 # =====================================Current Charging Stations ==============#
 charging_lst_src = check_exists("charging_stations")
-existing_charging_FP = get_FP(charging_lst_src, "charging_station")
+existing_charging_FP = get_FP(charging_lst_src, "charging_stations")
 if (existing_charging_FP is None):
     info_print("existing_charging_FP did not find a shape file for usage")
 
