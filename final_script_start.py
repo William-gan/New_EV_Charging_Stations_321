@@ -281,7 +281,7 @@ cinemas_FP = get_FP(cinemas_lst_src, "cinemas")
 if (cinemas_FP is None):
     info_print("cinemas_FP did not find a shape file for usage")
 
-cinemas_buffer = do_buffer(cinemas_FP, '50 Feet')
+cinemas_buffer = do_buffer(cinemas_FP, '500 Feet')
 
 # =====================================Specific Local Parks====================#
 facilities_lst_src = check_exists("facilities")
@@ -304,7 +304,7 @@ malls_FP = get_FP(mall_lst_src, "Malls_Shopping_Hubs")
 if (malls_FP is None):
     info_print("malls_FP did not find a shape file for usage")
 
-malls_buffer = do_buffer(malls_FP, '50 Feet')
+malls_buffer = do_buffer(malls_FP, '500 Feet')
 
 # =====================================Picnic Parks============================#
 picnic_lst_src = check_exists("picnic_parks_projections")
@@ -326,12 +326,16 @@ if (province_FP is None):
 lst_intersect = [
                 cinemas_buffer, picnic_buffer, malls_buffer, gas_buffer,
                 facilities_FP, province_FP, airports_FP,
-                buffered_roads, parking_lot_buffered
+                parking_lot_buffered
                 ]
+print(lst_intersect)
 
+for i in range(len(lst_intersect)):
+    split = lst_intersect[i].split('.')
+    new_name = split[0] + '_inter.shp'
+    debug_print("Intersecting: " + lst_intersect[i])
+    do_intersect([lst_intersect[i], buffered_roads], "inter_roads_{}.shp".format(i))
 
-out_intersect = "intersect_result.shp"
-do_intersect(lst_intersect, out_intersect)
 
 # ===== Figure out XY here ======#
 
