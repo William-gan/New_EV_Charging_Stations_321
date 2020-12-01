@@ -41,10 +41,10 @@ def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
         info_print("Did not provide enough features for feature to point",)
 
     try:
-        arcpy.FeatureToPoint(features_lst, output_name, point_loc)
+        arcpy.FeatureToPoint_management(features_lst, output_name, point_loc)
         return output_name
     except Exception as e:
-        error_print("FTP failed on outputing for " + output_name)
+        error_print("FTP failed on outputing for " + output_name + " with error " + str(e))
     return None
 
 
@@ -291,6 +291,9 @@ facilities_FP = get_FP(facilities_lst_src, "facilities")
 if (facilities_FP is None):
     info_print("facilities_FP did not find a shape file for usage")
 
+facilities_buffer = do_buffer(facilities_FP, '500 Feet')
+
+
 # =====================================Gas Stations============================#
 gas_station_lst_src = check_exists("Gas_Stations_Points_Ontario")
 gas_FP = get_FP(gas_station_lst_src, "Gas_Stations_Points_Ontario")
@@ -326,8 +329,8 @@ if (province_FP is None):
 
 # ====== Do intersection and pray =====#
 lst_intersect = [
-                cinemas_buffer, picnic_buffer, malls_buffer, gas_buffer,
-                facilities_FP, province_FP, airports_FP,
+                cinemas_buffer, picnic_buffer, gas_buffer,
+                facilities_buffer, province_FP, airports_FP,malls_buffer,
                 parking_lot_buffered
                 ]
 lst_for_merging = []
@@ -336,8 +339,8 @@ for i in range(len(lst_intersect)):
     new_name = split[0] + '_inter.shp'
     do_intersect([lst_intersect[i], buffered_roads], new_name)
     new_aggregate = split[0] + '_agg.shp'
-    arcpy.AggregatePolygons_cartography(new_name, new_aggregate, '20 Meters', "", "" , True , "", "")
-    lst_for_merging[i] = split[0] + '_FTP.shp'
+    arcpy.AggregatePolygons_cartography(new_name, new_aggregate, '30 Meters', "", "" , False , "", "")
+    lst_for_merging.append(split[0] + '_FTP.shp')
     do_feature_to_point(new_aggregate, lst_for_merging[i], "INSIDE")
 
 
