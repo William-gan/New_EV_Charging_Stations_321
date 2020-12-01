@@ -257,7 +257,9 @@ except Exception as e:
 
 info_print("buffered_roads")
 
-buffered_roads = do_buffer(folder_location +"/major_roads.shp",'500 Meters')
+# buffered_roads = do_buffer(folder_location +"/major_roads.shp",'500 Meters')
+arcpy.Buffer_analysis(folder_location +"/major_roads.shp",folder_location+'/major_roads_buffered.shp','500 Meters', "", "ROUND", "ALL", "")
+
 
 # ======================================Airports===============================#
 airport_lst_src = check_exists("airports")
@@ -333,8 +335,7 @@ print(lst_intersect)
 for i in range(len(lst_intersect)):
     split = lst_intersect[i].split('.')
     new_name = split[0] + '_inter.shp'
-    debug_print("Intersecting: " + lst_intersect[i])
-    do_intersect([lst_intersect[i], buffered_roads], new_name)
+    do_intersect([lst_intersect[i], folder_location+'/major_roads_buffered.shp'], new_name)
 
 
 # ===== Figure out XY here ======#
