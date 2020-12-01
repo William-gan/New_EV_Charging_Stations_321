@@ -48,13 +48,13 @@ def do_feature_to_point(features_lst, output_name, point_loc="CENTROID"):
     return None
 
 
-def erase_points(points_file, boundaries):
+def do_erase_points(points_file, boundaries):
     # https://desktop.arcgis.com/en/arcmap/10.3/tools/editing-toolbox/erase-point.htm
 
     try:
-        arcpy.ErasePoint_edit(point_files, boundaries, "INSIDE")
+        arcpy.ErasePoint_edit(points_file, boundaries, "INSIDE")
     except Exception as e:
-        error_print("Hit error while trying to Erase points , produced error" + str(e))
+        error_print("Hit error while trying to Erase points produced error: " + str(e))
 
 
 def do_intersect(features_lst, output_name, join="ALL"):
@@ -343,13 +343,12 @@ for i in range(len(lst_intersect)):
     lst_for_merging.append(split[0] + '_FTP.shp')
     do_feature_to_point(new_aggregate, lst_for_merging[i], "INSIDE")
 
-
-
-# ===== Figure out XY here ======#
-
-# use final_out_FP variable for the final points file we're making.
-
+try:
+    final_results = "EV_LOCATIONS.shp"
+    info_print("Trying to Merge final EV locations")
+    arcpy.Merge_management(lst_for_merging, final_results)
+except Exception as e:
+    debug_print("Failed on final EV_location merging")
 # ====== Subtract from existing charging here ======#
-
-# do_erase(final_points , charging_station_buffer)
+do_erase_points(final_results, charging_station_buffer)
 
