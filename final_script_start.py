@@ -334,7 +334,7 @@ for i in range(len(lst_intersect)):
     split = lst_intersect[i].split('.')
     new_name = split[0] + '_inter.shp'
     debug_print("Intersecting: " + lst_intersect[i])
-    do_intersect([lst_intersect[i], buffered_roads], "inter_roads_{}.shp".format(i))
+    do_intersect([lst_intersect[i], buffered_roads], new_name)
 
 
 # ===== Figure out XY here ======#
